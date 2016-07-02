@@ -4,7 +4,8 @@
 from flask import Flask
 from flask import request
 import MySQLdb
-from flask import json ,jsonify;
+from flask import json ,jsonify
+import datetime,time
 app = Flask(__name__)
 # Note: We don't need to call run() since our application is embedded within
 # the App Engine WSGI application server.
@@ -125,7 +126,52 @@ def searchByPart():
 
 @app.route('/submitPlay/',methods=['POST'])
 def submitPlay():
-	pass
+	if request.method == 'POST':
+		userId = request.form['uId']
+		videoId = request.form['videoId']
+		vedioPartLabel = request.form['vedioPartLabel']
+		vedioScoreLabel = request.form['vedioScoreLabel']
+
+		try:
+			conn = MySQLdb.connect(host = '166.111.82.59', user = 'fitfinder', passwd = 'fitfinder', db = 'fitfinder')
+		except Exception, e:
+				print e
+				sys.exit()
+
+		cursor = conn.cursor();
+		cursor.execute("select * from mediatable where mediaId = %s",(videoId,))
+		vinfo = cursor.fetchone()
+		strength = vinfo[4]
+		part = vinfo[3]
+		clickNum = vinfo[5]
+		clickNum = clickNum + 1
+		cursor.execute("update mediatable set clickNum = %s where mediaId = %s",(clickNum,videoId))
+		strengthList = strength.split('&')
+		partList = part.split("&")
+
+		uinfo = cursor.execute("select * from userinfo where userId = %s",(userId,))
+		oldArmScore = uinfo[6]
+		oldCoreScore = uinfo[8]
+		oldLegScore = uinfo[7]
+
+		if partList[0] == '1':
+			armScore = int(strengthList[0])*0.2 + oldArmScore
+			cursor.execute("update userinfo set armScore = %s where userId = %s",(armScore,userId))
+		if partList[1] == '2':
+			coreSore = int(strengthList[1])*0.2 + oldCoreScore
+			cursor.execute("update userinfo set coreScore = %s where userId = %s",(coreScore,userId))		
+		if partList[2] == '3':
+			legSore = int(strengthList[2])*0.2 + oldLegScore
+			cursor.execute("update userinfo set legScore = %s where userId = %s",(legScore,userId))
+		nowTime = time.strftime("%Y-%m-%d %H:%M:%S")
+		cursor.execute("update historyrecord set userId = %s,mediaId = %s,time = %s,armScore = %s,coreScore = %s,legScore = %s",(userId,videoId,nowTime,armScore,coreSore,legScore))
+
+	else:
+		error = 201
+		return error
+	cursor.close()
+	conn.close()
+		
 
 @app.errorhandler(404)
 def page_not_found(e):
