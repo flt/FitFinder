@@ -1,14 +1,33 @@
-"""`main` is the top level module for your Flask application."""
-
-# Import the Flask Framework
+#!/usr/bin/env python
+#
+# Copyright 2007 Google Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 from flask import Flask
 from flask import request
 import MySQLdb
 from flask import json ,jsonify;
 app = Flask(__name__)
-# Note: We don't need to call run() since our application is embedded within
-# the App Engine WSGI application server.
 
+
+class MainHandler(webapp2.RequestHandler):
+    def get(self):
+        self.response.write('Hello world!')
+
+app = webapp2.WSGIApplication([
+    ('/', MainHandler)
+], debug=True)
 
 @app.route('/')
 def hello():
@@ -70,7 +89,7 @@ def register():
 				print e
 				sys.exit()
 		cursor = conn.cursor();
-		cursor.execute("insert into userinfo (userName,userPwd,height,weight,armScore,legScore,coreSore,sex) values(%s,%s,%s,%s,%s,%s,%s,%s)",(userName,pwd,height,weight,initScore,initScore,initScore,gender,))
+		cursor.execute("insert into userinfo (userName,userPwd,height,weight,armScore,legScore,coreSore,sex) values(%s,%s,%s,%s,%s,%s,%s,%s,%s)",(userName,pwd,height,weight,time,initScore,initScore,initScore,gender,))
 		cursor.execute("select * from uinfo where username = %s", (userName,))
 		uinfo = cursor.fetchone()
 		data={
@@ -85,35 +104,7 @@ def register():
 
 @app.route('/getBodyScore/',methods=['GET'])
 def getBodyScore():
-	if request.method == 'GET':
-		userId = request.args.get("uId","1")
-		try:
-			conn = MySQLdb.connect(host = '166.111.82.59', user = 'fitfinder', passwd = 'fitfinder', db = 'fitfinder')
-		except Exception, e:
-				print e
-				sys.exit()
-		cursor = conn.cursor();
-		cursor.execute("select * from userinfo where userId = %s", (userId,))
-		if not cursor.fetchone():
-			error = 201
-			return error
-			#print "user does not exist!"
-		else:
-			cursor.execute("select * from userinfo where userId = %s", (userId,))
-			uinfo = cursor.fetchone()
-			data={
-				'height': uinfo[3],
-				'weight': uinfo[4],
-				'gender': uinfo[9],
-				'BodyPartScore':[uinfo[6],uinfo[8],uinfo[7]]
-			}
-			return jsonify({'result':data}),200;
-				
-	else:
-		error = 201
-		return error
-	cursor.close()
-	conn.close()
+	pass
 
 @app.route('/getRecordInfo/',methods=['GET'])
 def getRecordInfo():
