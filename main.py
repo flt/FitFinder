@@ -55,11 +55,33 @@ def login():
 
 @app.route('/signUp/',methods=['POST'])	
 def register():
-	userName = request.form['userName']
-	pwd = request.form['pwd']
-	gender = request.form['gender']
-	weight = request.form['']
-	pass
+	if request.method == 'POST':
+		userName = request.form['userName']
+		pwd = request.form['pwd']
+		gender = request.form['gender']
+		weight = request.form['weight']
+		height = request.form['height']
+		mHeight = height / 100
+		initScore = weight // (mHeight * mHeight)
+
+		try:
+			conn = MySQLdb.connect(host = '166.111.82.59', user = 'fitfinder', passwd = 'fitfinder', db = 'fitfinder')
+		except Exception, e:
+				print e
+				sys.exit()
+		cursor = conn.cursor();
+		cursor.execute("insert into userinfo (userName,userPwd,height,weight,armScore,legScore,coreSore,sex) values(%s,%s,%s,%s,%s,%s,%s,%s)",(userName,pwd,height,weight,initScore,initScore,initScore,gender,))
+		cursor.execute("select * from uinfo where username = %s", (userName,))
+		uinfo = cursor.fetchone()
+		data={
+				'height': uinfo[3],
+				'weight': uinfo[4],
+				'gender': uinfo[9],
+				'BodyPartScore':[uinfo[6],uinfo[8],uinfo[7]]
+		}
+		return jsonify({'result':data}),200;
+		cursor.close()
+		conn.close()
 
 @app.route('/getBodyScore/',methods=['GET'])
 def getBodyScore():
